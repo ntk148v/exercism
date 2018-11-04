@@ -1,13 +1,13 @@
-/*  Hamming difference between two DNA strands */
+/*Package hamming difference between two DNA strands*/
 package hamming
 
 import "errors"
 
-// Calculate the Hamming distance between two DNA strands
+// Distance alculate the Hamming distance between two DNA strands
 func Distance(a, b string) (int, error) {
 	diff := 0
 	if len(a) != len(b) {
-		return diff, errors.New("Two inputs don't have the same length")
+		return diff, errors.New("two inputs don't have the same length")
 	}
 	for i := range a {
 		if a[i] != b[i] {
