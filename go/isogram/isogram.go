@@ -1,21 +1,19 @@
 package isogram
 
-import (
-	"strings"
-	"unicode"
-)
+import "unicode"
 
 // IsIsogram determines if a word or phrase is an isogram.
 func IsIsogram(input string) bool {
-	input = strings.ToLower(input)
-	var count int
-	for _, character := range input {
-		if unicode.IsLetter(character) {
-			count = strings.Count(input, string(character))
-			if count > 1 {
-				return false
-			}
+	seen := map[rune]bool{}
+	for _, r := range input {
+		if !unicode.IsLetter(r) {
+			continue
 		}
+		r = unicode.ToLower(r)
+		if seen[r] {
+			return false
+		}
+		seen[r] = true
 	}
 	return true
 }
