@@ -3,18 +3,12 @@ package luhn
 import (
 	"strconv"
 	"strings"
-	"unicode"
 )
 
 // Valid validates a variety of identification.
 func Valid(input string) bool {
 	// Remove all whitespace
-	input = strings.Map(func(r rune) rune {
-		if unicode.IsSpace(r) {
-			return -1
-		}
-		return r
-	}, input)
+	input = strings.Replace(input, " ", "", -1)
 	if _, err := strconv.Atoi(input); err != nil || len(input) <= 1 {
 		return false
 	}
