@@ -21,11 +21,10 @@ func Range(min, max int) (ts []Triplet) {
 // (the perimeter) is equal to p.
 func Sum(sum int) (ts []Triplet) {
 	max := sum / 2
-	for a := 1; a <= max; a++ {
-		for b := a; b <= max; b++ {
-			if c := sum - a - b; a*a+b*b == c*c {
-				ts = append(ts, Triplet{a, b, c})
-			}
+	rts := Range(1, max)
+	for _, rt := range rts {
+		if sum == rt[0]+rt[1]+rt[2] {
+			ts = append(ts, rt)
 		}
 	}
 	return
