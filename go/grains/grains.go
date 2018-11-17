@@ -2,20 +2,22 @@ package grains
 
 import (
 	"fmt"
-	"math"
 )
 
-// Square returns the number of  grains on a square on a chess board where the
+// Square returns the number of grains on a square on a chess board where the
 // first square has 1 and every subsequent square doubles the number.
 func Square(num int) (uint64, error) {
 	if num < 1 || num > 64 {
-		return 0, fmt.Errorf("Num [%d] is invalid.", num)
+		return 0, fmt.Errorf("num[%d] invalid", num)
 	}
-	return uint64(math.Pow(2, float64(num-1))), nil
+	// a left shift is equivalent to multiplying by 2.  So we need to left
+	// shift by num-1 times to get the number of grains on that square
+	return 1 << (uint16(num) - 1), nil
 }
 
-// Total returns the total number of grains of the chessboard.
+// Total returns the total number of grains on the chess board
 func Total() uint64 {
-	// uint64's range: 0-18446744073709551615.
-	return uint64(math.Pow(2, 63))*2 - 1
+	// the number of grains added up to any point on the board is simply
+	// two to the power of that number - 1 (because maths)
+	return (1 << 64) - 1
 }
