@@ -2,6 +2,7 @@ package clock
 
 import "fmt"
 
+// Clock reprents a clock.
 type Clock int
 
 // New returns a new Clock.
