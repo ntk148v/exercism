@@ -1,0 +1,33 @@
+package letter
+
+type FreqMap map[rune]int
+
+func Frequency(s string) FreqMap {
+	m := FreqMap{}
+	for _, r := range s {
+		m[r]++
+	}
+	return m
+}
+
+// ConcurrentFrequency counts word occurances using parallel processes.
+func ConcurrentFrequency(ss []string) FreqMap {
+	switch len(ss) {
+	case 0:
+		return FreqMap{}
+	case 1:
+		return Frequency(ss[0])
+	}
+	ch := make(chan FreqMap)
+	f := func(ss []string) {
+		ch <- ConcurrentFrequency(ss)
+	}
+	half := len(ss) / 2
+	go f(ss[:half])
+	go f(ss[half:])
+	m := <-ch
+	for r, n := range <-ch {
+		m[r] += n
+	}
+	return m
+}
