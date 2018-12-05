@@ -37,7 +37,7 @@ func Build(records []Record) (*Node, error) {
 				return nil, fmt.Errorf("Invalid root record")
 			}
 			continue
-		} else if i != r.ID || r.ID <= r.Parent {
+		} else if i != r.ID || r.ID <= r.Parent || r.ID >= len(records) {
 			return nil, fmt.Errorf("Invalid record")
 		}
 
