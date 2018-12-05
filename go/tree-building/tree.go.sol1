@@ -1,0 +1,59 @@
+package tree
+
+import (
+	"fmt"
+	"sort"
+)
+
+type Record struct {
+	ID, Parent int
+}
+
+type Node struct {
+	ID       int
+	Children []*Node
+}
+
+type Nodes []*Node
+
+func (n Nodes) Len() int           { return len(n) }
+func (n Nodes) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }
+func (n Nodes) Less(i, j int) bool { return n[i].ID < n[j].ID }
+
+func Build(records []Record) (*Node, error) {
+	if len(records) == 0 {
+		return nil, nil
+	}
+
+	nodes := make([]Node, len(records))
+	parents := make([]*Node, len(records))
+	seen := make([]bool, len(records))
+
+	for _, r := range records {
+		if r.ID >= len(records) {
+			return nil, fmt.Errorf("Too high id %d", r.ID)
+		}
+		if r.ID != 0 && r.ID <= r.Parent {
+			return nil, fmt.Errorf("Record %d has self or later parent %d", r.ID, r.Parent)
+		}
+		if seen[r.ID] {
+			return nil, fmt.Errorf("Record with id %d occurs multiple times", r.ID)
+		}
+		seen[r.ID] = true
+		if r.ID != 0 {
+			parents[r.ID] = &nodes[r.Parent]
+		} else if r.Parent != 0 {
+			return nil, fmt.Errorf("Root node has non-0 parent %d", r.Parent)
+		}
+	}
+
+	for i := 1; i < len(nodes); i++ {
+		parents[i].Children = append(parents[i].Children, &nodes[i])
+	}
+
+	for i, node := range nodes {
+		nodes[i].ID = i
+		sort.Sort(Nodes(node.Children))
+	}
+	return &nodes[0], nil
+}
