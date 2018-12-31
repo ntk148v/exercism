@@ -15,27 +15,24 @@ type Robot struct {
 // usedName keeps track of which names are in use.
 var usedNames = make(map[string]bool)
 
-// count tracks number of given names
-var count int
-
-// max number of available names
-var max = 676000
-
 // Name defines the random unique name of robot.
 func (r *Robot) Name() (string, error) {
 	if r.name > "" {
 		return r.name, nil
 	}
-	ra := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
-	for r.name == "" || usedNames[r.name] {
-		if count == max {
+	ra := rand.New(rand.NewSource(time.Now().Unix()))
+	first := fmt.Sprintf("%c%c%03d",
+		byte(65+ra.Intn(26)),
+		byte(65+ra.Intn(26)),
+		ra.Intn(1000))
+	for inUse, ok := r.name == "", true; ok && inUse; inUse, ok = usedNames[r.name] {
+		r.name = fmt.Sprintf("%c%c%03d",
+			byte(65+ra.Intn(26)),
+			byte(65+ra.Intn(26)),
+			ra.Intn(1000))
+		if r.name == first {
 			return "", errors.New("All valid robot names are used")
 		}
-		r.name = fmt.Sprintf("%c%c%03d",
-			'A'+byte(ra.Intn(26)),
-			'A'+byte(ra.Intn(26)),
-			ra.Intn(1000))
-		count++
 	}
 	usedNames[r.name] = true
 	return r.name, nil
