@@ -21,20 +21,23 @@ var count int
 // max number of available names
 var max = 676000
 
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+}
+
 // Name defines the random unique name of robot.
 func (r *Robot) Name() (string, error) {
 	if r.name > "" {
 		return r.name, nil
 	}
-	ra := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 	for r.name == "" || usedNames[r.name] {
 		if count == max {
 			return "", errors.New("All valid robot names are used")
 		}
 		r.name = fmt.Sprintf("%c%c%03d",
-			'A'+byte(ra.Intn(26)),
-			'A'+byte(ra.Intn(26)),
-			ra.Intn(1000))
+			'A'+byte(rand.Intn(26)),
+			'A'+byte(rand.Intn(26)),
+			rand.Intn(1000))
 		count++
 	}
 	usedNames[r.name] = true
