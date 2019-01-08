@@ -7,132 +7,113 @@ import (
 	"sort"
 )
 
-type outcome int
+// scoreBoard keeps track of the score
+type scoreBoard map[string]*team
 
-const (
-	loss outcome = iota
-	draw
-	win
-)
-
-type inputEntry struct {
-	teams    [2]string
-	outcomes [2]outcome
+// team keeps track a team's outcomes
+type team struct {
+	name                            string
+	played, win, loss, draw, points int
 }
 
-type teamResult struct {
-	team   string
-	played int
-	wins   int
-	draws  int
-	losses int
-	points int
-}
-
-type TeamResultSlice []teamResult
-
-// sort.Interface implementation, sorts on points, descending
-func (s TeamResultSlice) Len() int {
-	return len(s)
-}
-
-func (s TeamResultSlice) Less(i, j int) bool {
-	switch {
-	case s[i].points != s[j].points:
-		return s[i].points > s[j].points
-	case s[i].wins != s[j].wins:
-		return s[i].wins > s[j].wins
-	default:
-		return s[i].team < s[j].team
-	}
-}
-
-func (s TeamResultSlice) Swap(i, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-func readInput(reader io.Reader) ([]inputEntry, error) {
-	var entries []inputEntry
+// Tally reads an input file to create a scoreBoard
+func Tally(reader io.Reader, writer io.Writer) error {
 	csvReader := csv.NewReader(reader)
 	csvReader.Comma = ';'
 	csvReader.Comment = '#'
 	csvReader.FieldsPerRecord = -1 // Allow variable number of fields
+	board := make(scoreBoard)
 	for {
 		record, err := csvReader.Read()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return nil, err
+			return err
 		}
-		if len(record) == 3 {
-			t1, t2 := record[0], record[1]
-			teams := [2]string{t1, t2}
-			var outcomes [2]outcome
-			switch record[2] {
-			case "win":
-				outcomes = [2]outcome{win, loss}
-			case "loss":
-				outcomes = [2]outcome{loss, win}
-			case "draw":
-				outcomes = [2]outcome{draw, draw}
-			default:
-				return nil, fmt.Errorf("Invalid outcome %q", record[2])
-			}
-			entries = append(entries, inputEntry{teams: teams, outcomes: outcomes})
-		} else {
-			return nil, fmt.Errorf("Invalid record: %v", record)
+		if err := board.addRecord(record); err != nil {
+			return err
 		}
 	}
-	return entries, nil
-}
 
-func tallyEntries(entries []inputEntry) map[string]teamResult {
-	var results = make(map[string]teamResult)
-	for _, entry := range entries {
-		for i := 0; i < 2; i++ {
-			team := entry.teams[i]
-			outcome := entry.outcomes[i]
-			result, present := results[team]
-			if !present {
-				result.team = team
-				// The rest is 0, which is correct
-			}
-			switch outcome {
-			case win:
-				result.wins++
-				result.points += 3
-			case draw:
-				result.draws++
-				result.points++
-			case loss:
-				result.losses++
-			}
-			result.played++
-			results[team] = result
-		}
-	}
-	return results
-}
-
-func report(writer io.Writer, resultMap map[string]teamResult) {
-	var entries TeamResultSlice = make([]teamResult, 0, len(resultMap))
-	for _, entry := range resultMap {
-		entries = append(entries, entry)
-	}
-	sort.Sort(entries)
+	teams := byScore(board.getTeams())
+	sort.Sort(teams)
 	fmt.Fprintf(writer, "Team                           | MP |  W |  D |  L |  P\n")
-	for _, entry := range entries {
+	for _, team := range teams {
 		fmt.Fprintf(writer, "%-30s | %2d | %2d | %2d | %2d | %2d\n",
-			entry.team, entry.played, entry.wins, entry.draws, entry.losses, entry.points)
+			team.name, team.played, team.win, team.draw, team.loss, team.points)
+	}
+	return nil
+}
+
+// addGame validates and adds a game record to the scoreboard
+func (b scoreBoard) addRecord(record []string) error {
+	if len(record) != 3 {
+		return fmt.Errorf("Invalid record: %v", record)
+	}
+	home, homeInBoard := b[record[0]]
+	away, awayInBoard := b[record[1]]
+	if !homeInBoard {
+		home = &team{name: record[0]}
+		b[record[0]] = home
+	}
+	if !awayInBoard {
+		away = &team{name: record[1]}
+		b[record[1]] = away
+	}
+	switch record[2] {
+	case "win":
+		addWin(home, away)
+	case "loss":
+		addWin(away, home)
+	case "draw":
+		addDraw(home, away)
+	default:
+		return fmt.Errorf("Invalid outcome: %q", record[2])
+	}
+	return nil
+}
+
+// getTeams converts the scoreboard into a list
+func (b scoreBoard) getTeams() []team {
+	var teams []team
+	for _, team := range b {
+		teams = append(teams, *team)
+	}
+	return teams
+}
+
+// byScore sorts the team by points, then by wins, then aphabetically
+type byScore []team
+
+func (t byScore) Len() int      { return len(t) }
+func (t byScore) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
+func (t byScore) Less(i, j int) bool {
+	switch {
+	case t[i].points != t[j].points:
+		return t[i].points > t[j].points
+	case t[i].win != t[j].win:
+		return t[i].win > t[j].win
+	default:
+		return t[i].name < t[j].name
 	}
 }
 
-func Tally(reader io.Reader, writer io.Writer) error {
-	entries, err := readInput(reader)
-	if err != nil {
-		return err
-	}
-	report(writer, tallyEntries(entries))
-	return nil
+// addWin adds win to winner team & loss to the loser one
+func addWin(winner, loser *team) {
+	winner.played++
+	loser.played++
+	winner.win++
+	loser.loss++
+	winner.points += 3
+}
+
+// addDraw adds draw to both teams
+func addDraw(home, away *team) {
+	home.played++
+	away.played++
+	home.draw++
+	away.draw++
+	home.points++
+	away.points++
 }
