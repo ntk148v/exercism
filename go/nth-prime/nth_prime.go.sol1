@@ -1,0 +1,27 @@
+package prime
+
+import "fmt"
+
+func Nth(n int) (int, bool) {
+	switch {
+	case n < 1:
+		return 0, false
+	case n == 1:
+		return 2, true
+	}
+	var primeList []int
+	// First number to test if prime
+	num := 3
+	primeList = append(primeList, 2)
+	for len(primeList) <= n {
+		for _, p := range primeList {
+			if num%p == 0 {
+				break
+			}
+		}
+		primeList = append(primeList, num)
+		num += 2
+	}
+	fmt.Println(primeList)
+	return primeList[len(primeList)-1], true
+}
