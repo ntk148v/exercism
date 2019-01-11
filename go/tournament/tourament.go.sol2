@@ -36,13 +36,8 @@ func Tally(reader io.Reader, writer io.Writer) error {
 		}
 	}
 
-	teams := board.getTeams()
-	sort.Slice(teams, func(i, j int) bool {
-		if teams[i].points != teams[j].points {
-			return teams[i].points > teams[j].points
-		}
-		return teams[i].name < teams[j].name
-	})
+	teams := byScore(board.getTeams())
+	sort.Sort(teams)
 	fmt.Fprintf(writer, "Team                           | MP |  W |  D |  L |  P\n")
 	for _, team := range teams {
 		fmt.Fprintf(writer, "%-30s | %2d | %2d | %2d | %2d | %2d\n",
@@ -86,6 +81,22 @@ func (b scoreBoard) getTeams() []team {
 		teams = append(teams, *team)
 	}
 	return teams
+}
+
+// byScore sorts the team by points, then by wins, then aphabetically
+type byScore []team
+
+func (t byScore) Len() int      { return len(t) }
+func (t byScore) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
+func (t byScore) Less(i, j int) bool {
+	switch {
+	case t[i].points != t[j].points:
+		return t[i].points > t[j].points
+	case t[i].win != t[j].win:
+		return t[i].win > t[j].win
+	default:
+		return t[i].name < t[j].name
+	}
 }
 
 // addWin adds win to winner team & loss to the loser one
