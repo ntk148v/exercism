@@ -1,8 +1,6 @@
 package twelve
 
-import (
-	"fmt"
-)
+import "fmt"
 
 var dayGifts = [][]string{
 	[]string{"first", "a Partridge in a Pear Tree."},
@@ -21,6 +19,7 @@ var dayGifts = [][]string{
 
 const form = "On the %s day of Christmas my true love gave to me%s"
 
+// Verse generates a verse depend on the input day
 func Verse(i int) string {
 	var gifts string
 	for j := i - 1; j >= 0; j-- {
@@ -35,6 +34,7 @@ func Verse(i int) string {
 	return fmt.Sprintf(form, dayGifts[i-1][0], gifts)
 }
 
+// Song generates a complete twelve days song
 func Song() string {
 	var song = ""
 	for i := 1; i <= 12; i++ {
