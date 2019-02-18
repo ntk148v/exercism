@@ -12,6 +12,7 @@ type Matrix struct {
 	value      []int
 }
 
+// New creates a matrix from the given string
 func New(s string) (*Matrix, error) {
 	rows := strings.Split(s, "\n")
 	matrix := Matrix{rows: len(rows), cols: -1}
