@@ -18,6 +18,7 @@ func Use(o ResourceOpener, input string) (err error) {
 		if x := recover(); x != nil {
 			switch x.(type) {
 			case FrobError:
+				err = x.(FrobError).inner
 				r.Defrob(x.(FrobError).defrobTag)
 			case error:
 				err = x.(error)
