@@ -5,26 +5,19 @@ package erratum
 func Use(o ResourceOpener, input string) (err error) {
 	var r Resource
 	r, err = o()
-	if err != nil {
-		switch err.(type) {
-		case TransientError:
-			return Use(o, input)
-		default:
+	for err != nil {
+		if _, ok := err.(TransientError); !ok {
 			return err
 		}
+		r, err = o()
 	}
 	defer r.Close()
 	defer func() {
 		if x := recover(); x != nil {
-			switch x.(type) {
-			case FrobError:
-				err = x.(FrobError).inner
-				r.Defrob(x.(FrobError).defrobTag)
-			case error:
-				err = x.(error)
-			default:
-				panic(x)
+			if frob, ok := x.(FrobError); ok {
+				r.Defrob(frob.defrobTag)
 			}
+			err = x.(error)
 		}
 	}()
 	r.Frob(input)
